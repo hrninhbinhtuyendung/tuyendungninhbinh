@@ -1,0 +1,42 @@
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: #f3f4f6;
+  font-family: Arial, sans-serif !important;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  font-family: Arial, sans-serif !important;
+}
+
+input,
+textarea,
+select,
+button {
+  font: inherit;
+  font-family: Arial, sans-serif !important;
+}
+
+a,
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+span,
+small,
+strong,
+label {
+  font-family: Arial, sans-serif !important;
+}

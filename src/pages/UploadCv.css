@@ -1,0 +1,183 @@
+.upload-cv-page {
+  min-height: calc(100vh - 72px);
+  padding: 24px clamp(16px, 4vw, 42px) 40px;
+  background:
+    radial-gradient(circle at 8% 6%, #d3ffea 0, transparent 28%),
+    radial-gradient(circle at 95% 0%, #d7eeff 0, transparent 24%),
+    #f4f8f6;
+  color: #102218;
+}
+
+.upload-cv-hero {
+  border-radius: 18px;
+  padding: 22px;
+  border: 1px solid #d7e5db;
+  background: linear-gradient(130deg, #056a4a, #13a56d 58%, #37c58e);
+  color: #fff;
+}
+
+.upload-cv-hero h1 {
+  margin: 0;
+  font-size: clamp(30px, 4vw, 46px);
+}
+
+.upload-cv-hero p {
+  margin: 10px 0 0;
+  opacity: 0.95;
+}
+
+.candidate-section {
+  margin-top: 18px;
+  padding: 24px;
+  border-radius: 18px;
+  border: 1px solid #d7e5db;
+  background: #ffffff;
+}
+
+.job-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.candidate-header span {
+  color: #4d6658;
+  font-weight: 600;
+}
+
+.candidate-form {
+  margin-top: 14px;
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid #dcebe3;
+  background: #fbfefc;
+}
+
+.candidate-form label {
+  display: grid;
+  gap: 6px;
+  font-weight: 700;
+  color: #1f3a2c;
+}
+
+.candidate-form input,
+.candidate-form select {
+  border: 1px solid #ccdfd3;
+  border-radius: 10px;
+  padding: 11px 12px;
+  font: inherit;
+  background: #ffffff;
+}
+
+.candidate-form button {
+  height: 44px;
+  border: 0;
+  border-radius: 10px;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  background: linear-gradient(135deg, #2f7cff, #0e5fe4);
+}
+
+.candidate-form button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.candidate-cancel-btn {
+  height: 42px;
+  border: 1px solid #c8ddd0;
+  border-radius: 10px;
+  background: #f1f8f4;
+  color: #245542;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.candidate-status {
+  margin: 4px 0 0;
+  color: #2f5c47;
+  font-weight: 700;
+}
+
+.job-grid {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.candidate-empty {
+  grid-column: 1/-1;
+  color: #4d6658;
+  font-weight: 600;
+}
+
+.job-card {
+  border-radius: 14px;
+  border: 1px solid #dcebe3;
+  padding: 16px;
+  background: #fbfefc;
+}
+
+.job-card h3 {
+  margin: 0;
+}
+
+.company {
+  margin: 8px 0 12px;
+  color: #486153;
+}
+
+.tags,
+.skills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tags span,
+.skills small {
+  border-radius: 999px;
+  padding: 5px 9px;
+  font-size: 13px;
+}
+
+.tags span {
+  background: #e2f8ec;
+  color: #106741;
+}
+
+.skills small {
+  border: 1px solid #d5e8de;
+  color: #385a49;
+}
+
+.job-link {
+  display: inline-block;
+  margin-top: 12px;
+  color: #0f8054;
+  font-weight: 700;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.candidate-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.edit-link {
+  color: #0e63dd;
+}
+
+@media (max-width: 980px) {
+  .job-grid {
+    grid-template-columns: 1fr;
+  }
+}

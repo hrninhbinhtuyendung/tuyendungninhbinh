@@ -1,0 +1,76 @@
+.privacy-page {
+  min-height: calc(100vh - 72px);
+  padding: 24px clamp(16px, 4vw, 48px) 40px;
+  background:
+    radial-gradient(circle at 8% 6%, #d6ffed 0, transparent 28%),
+    radial-gradient(circle at 95% 0%, #d9efff 0, transparent 24%),
+    #f4f8f6;
+}
+
+.privacy-card {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 26px;
+  border-radius: 18px;
+  border: 1px solid #d7e5db;
+  background: #ffffff;
+  box-shadow: 0 14px 30px rgba(15, 49, 33, 0.08);
+}
+
+.privacy-breadcrumb {
+  margin: 0 0 10px;
+  color: #4d6658;
+  font-weight: 600;
+}
+
+.privacy-breadcrumb a {
+  color: #0f7e56;
+  text-decoration: none;
+}
+
+.privacy-breadcrumb a:hover {
+  text-decoration: underline;
+}
+
+.privacy-card h1 {
+  margin: 0;
+  color: #12261b;
+}
+
+.privacy-updated {
+  margin: 8px 0 16px;
+  color: #4d6658;
+  font-weight: 600;
+}
+
+.privacy-card section + section {
+  margin-top: 14px;
+}
+
+.privacy-card h2 {
+  margin: 0 0 8px;
+  color: #173729;
+  font-size: 20px;
+}
+
+.privacy-card p,
+.privacy-card li {
+  margin: 0;
+  color: #2f4b3c;
+  line-height: 1.65;
+}
+
+.privacy-card ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.privacy-card a {
+  color: #0f7e56;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.privacy-card a:hover {
+  text-decoration: underline;
+}
