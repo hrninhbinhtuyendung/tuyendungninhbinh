@@ -181,3 +181,124 @@
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 768px) {
+  .upload-cv-page {
+    padding: 14px 10px 24px;
+  }
+
+  .upload-cv-hero {
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .upload-cv-hero h1 {
+    font-size: 22px;
+    line-height: 1.2;
+  }
+
+  .upload-cv-hero p {
+    margin-top: 8px;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .candidate-section {
+    margin-top: 14px;
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .job-heading {
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .job-heading h2 {
+    margin: 0;
+    font-size: 18px;
+  }
+
+  .candidate-header span {
+    font-size: 14px;
+    line-height: 1.35;
+  }
+
+  .candidate-form {
+    margin-top: 10px;
+    gap: 8px;
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  .candidate-form label {
+    gap: 4px;
+    font-size: 13px;
+  }
+
+  .candidate-form input,
+  .candidate-form select {
+    padding: 10px 11px;
+    font-size: 13px;
+  }
+
+  .candidate-form button,
+  .candidate-cancel-btn {
+    height: 40px;
+    font-size: 13px;
+  }
+
+  .candidate-status {
+    font-size: 13px;
+  }
+
+  .job-card {
+    padding: 12px;
+  }
+
+  .job-card h3 {
+    font-size: 18px;
+  }
+
+  .company {
+    font-size: 13px;
+  }
+
+  .tags span,
+  .skills small,
+  .job-link {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 420px) {
+  .upload-cv-hero h1 {
+    font-size: 20px;
+  }
+
+  .upload-cv-hero p {
+    font-size: 12px;
+  }
+
+  .job-heading h2 {
+    font-size: 16px;
+  }
+
+  .candidate-header span,
+  .candidate-form label,
+  .candidate-form input,
+  .candidate-form select,
+  .candidate-form button,
+  .candidate-cancel-btn,
+  .candidate-status,
+  .company,
+  .tags span,
+  .skills small,
+  .job-link {
+    font-size: 12px;
+  }
+
+  .job-card h3 {
+    font-size: 16px;
+  }
+}

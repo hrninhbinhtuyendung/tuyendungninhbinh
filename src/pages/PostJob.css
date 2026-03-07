@@ -166,8 +166,99 @@
   }
 }
 
+@media (max-width: 768px) {
+  .post-job-page {
+    padding: 14px 10px 24px;
+  }
+
+  .post-job-form-card {
+    padding: 16px;
+  }
+
+  .post-job-form-card h1 {
+    font-size: 22px;
+    line-height: 1.2;
+  }
+
+  .post-job-form-card > p {
+    margin: 8px 0 10px;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .post-job-form {
+    gap: 10px;
+  }
+
+  .post-job-form label {
+    gap: 5px;
+    font-size: 11px;
+  }
+
+  .post-job-form input,
+  .post-job-form textarea {
+    border-radius: 10px;
+    padding: 10px 11px;
+    font-size: 11px;
+  }
+
+  .post-job-form button {
+    height: 42px;
+    border-radius: 10px;
+    font-size: 13px;
+  }
+
+  .post-job-status {
+    margin-top: 10px;
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+
+  .post-job-side {
+    gap: 10px;
+  }
+
+  .post-job-side-card {
+    padding: 14px;
+  }
+
+  .post-job-side-card h2,
+  .post-job-side-card h3 {
+    margin: 0 0 8px;
+    font-size: 16px;
+  }
+
+  .post-job-side-card strong {
+    font-size: 15px;
+  }
+
+  .post-job-side-card p,
+  .post-job-side-card small,
+  .post-job-side-meta span {
+    font-size: 11px;
+  }
+}
+
 @media (max-width: 680px) {
   .post-job-row {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 420px) {
+  .post-job-form-card h1 {
+    font-size: 20px;
+  }
+
+  .post-job-form-card > p {
+    font-size: 11px;
+  }
+
+  .post-job-form label,
+  .post-job-form input,
+  .post-job-form textarea,
+  .post-job-form button,
+  .post-job-status {
+    font-size: 10px;
   }
 }

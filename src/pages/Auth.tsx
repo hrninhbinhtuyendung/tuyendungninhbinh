@@ -1,4 +1,4 @@
-﻿import { useState, type FormEvent } from "react";
+﻿import { useEffect, useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import "./Auth.css";
@@ -8,6 +8,13 @@ type AuthMode = "signin" | "signup";
 function resolveMode(search: string): AuthMode {
   const mode = new URLSearchParams(search).get("mode");
   return mode === "signup" ? "signup" : "signin";
+}
+
+function resolveNextPath(search: string): string {
+  const next = new URLSearchParams(search).get("next");
+  if (!next) return "/";
+  if (!next.startsWith("/") || next.startsWith("//")) return "/";
+  return next;
 }
 
 function Auth() {
@@ -20,6 +27,11 @@ function Auth() {
   const [statusText, setStatusText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const { signIn, signUp } = useAuth();
+  const nextPath = resolveNextPath(location.search);
+
+  useEffect(() => {
+    setMode(resolveMode(location.search));
+  }, [location.search]);
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -35,7 +47,7 @@ function Auth() {
       }
 
       setStatusText("Đăng nhập thành công.");
-      navigate("/");
+      navigate(nextPath);
       return;
     }
 
@@ -52,7 +64,7 @@ function Auth() {
       );
     } else {
       setStatusText("Đăng ký thành công. Bạn đã được đăng nhập.");
-      navigate("/");
+      navigate(nextPath);
     }
     setSubmitting(false);
   };
@@ -69,23 +81,6 @@ function Auth() {
             ? "Đăng nhập để ứng tuyển và quản lý tin tuyển dụng."
             : "Tạo tài khoản để bắt đầu ứng tuyển công việc tại Ninh Bình."}
         </p>
-
-        <div className="auth-switch">
-          <button
-            type="button"
-            className={mode === "signin" ? "active" : ""}
-            onClick={() => setMode("signin")}
-          >
-            Đăng nhập
-          </button>
-          <button
-            type="button"
-            className={mode === "signup" ? "active" : ""}
-            onClick={() => setMode("signup")}
-          >
-            Đăng ký
-          </button>
-        </div>
 
         <form className="auth-form" onSubmit={onSubmit}>
           {mode === "signup" && (
@@ -122,6 +117,16 @@ function Auth() {
         </form>
 
         {statusText && <p className="auth-status">{statusText}</p>}
+        <p className="auth-alt-action">
+          {mode === "signin" ? "Chưa có tài khoản?" : "Đã có tài khoản?"}{" "}
+          <button
+            type="button"
+            className="auth-alt-link"
+            onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+          >
+            {mode === "signin" ? "Đăng ký" : "Đăng nhập"}
+          </button>
+        </p>
       </div>
     </div>
   );

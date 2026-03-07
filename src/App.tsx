@@ -7,8 +7,10 @@
   useLocation,
 } from "react-router-dom";
 import "./App.css";
+import hrLogo from "./assets/logo_HR.jpg";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import AccountProfile from "./pages/AccountProfile";
+import ApplicationNotification from "./pages/ApplicationNotification";
 import ApplyJob from "./pages/ApplyJob";
 import Auth from "./pages/Auth";
 import Home from "./pages/Home";
@@ -27,6 +29,7 @@ function AppLayout() {
       {showTopbar && (
         <header className="app-topbar">
           <div className="app-brand">
+            <img src={hrLogo} alt="HR Ninh Bình" className="app-brand-logo" />
             Tuyển dụng <span>Ninh Bình</span>
           </div>
 
@@ -72,6 +75,7 @@ function AppLayout() {
           <Route path="/" element={<Home />} />
           <Route path="/job/:id" element={<JobDetail />} />
           <Route path="/apply/:id" element={<ApplyJob />} />
+          <Route path="/application-notification/:id" element={<ApplicationNotification />} />
           <Route path="/post" element={<PostJob />} />
           <Route path="/upload-cv" element={<UploadCv />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
