@@ -24,6 +24,7 @@ type QuickApplyState = {
 
 type CandidatePreview = {
   id: number;
+  user_id?: string | null;
   full_name: string;
   email: string;
   phone: string | null;
@@ -45,6 +46,29 @@ type ApplicationNotification = {
   created_at: string;
   job_title: string;
 };
+
+type ChatNotification = {
+  message_id: number;
+  conversation_id: string;
+  sender_user_id: string;
+  sender_name: string;
+  message: string;
+  created_at: string;
+};
+
+type NotificationItem =
+  | {
+      key: string;
+      kind: "application";
+      created_at: string;
+      application: ApplicationNotification;
+    }
+  | {
+      key: string;
+      kind: "chat";
+      created_at: string;
+      chat: ChatNotification;
+    };
 
 const fallbackJobs: JobView[] = [
   {
@@ -122,6 +146,8 @@ export default function Home() {
 
   const [jobs, setJobs] = useState<JobView[]>([]);
   const [statusText, setStatusText] = useState("");
+  const [savedStatusText, setSavedStatusText] = useState("");
+  const [savedJobIds, setSavedJobIds] = useState<Set<number>>(() => new Set());
   const [keywordInput, setKeywordInput] = useState("");
   const [locationInput, setLocationInput] = useState("");
   const [searchKeyword, setSearchKeyword] = useState("");
@@ -132,8 +158,8 @@ export default function Home() {
   const [candidateStatus, setCandidateStatus] = useState("");
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotificationMenu, setShowNotificationMenu] = useState(false);
-  const [notificationItems, setNotificationItems] = useState<ApplicationNotification[]>([]);
-  const [readNotificationIds, setReadNotificationIds] = useState<number[]>([]);
+  const [notificationItems, setNotificationItems] = useState<NotificationItem[]>([]);
+  const [readNotificationKeys, setReadNotificationKeys] = useState<string[]>([]);
   const userMenuRef = useRef<HTMLDivElement | null>(null);
   const notificationMenuRef = useRef<HTMLDivElement | null>(null);
   const avatarLabel = (user?.email?.trim().charAt(0) || "U").toUpperCase();
@@ -147,9 +173,9 @@ export default function Home() {
 
   const unreadNotificationCount = useMemo(() => {
     if (notificationItems.length === 0) return 0;
-    const readSet = new Set(readNotificationIds);
-    return notificationItems.filter((item) => !readSet.has(item.id)).length;
-  }, [notificationItems, readNotificationIds]);
+    const readSet = new Set(readNotificationKeys);
+    return notificationItems.filter((item) => !readSet.has(item.key)).length;
+  }, [notificationItems, readNotificationKeys]);
 
   useEffect(() => {
     setJobs(sortJobsByViews(fallbackJobs));
@@ -200,6 +226,93 @@ export default function Home() {
 
     void loadJobs();
   }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setSavedJobIds(new Set());
+      setSavedStatusText("");
+      return;
+    }
+
+    const client = supabase;
+    if (!isSupabaseConfigured || !client) {
+      setSavedJobIds(new Set());
+      setSavedStatusText("Chưa cấu hình Supabase để đồng bộ việc đã lưu.");
+      return;
+    }
+
+    const loadSavedJobs = async () => {
+      const { data, error } = await client
+        .from("job_saves")
+        .select("job_id")
+        .eq("user_id", user.id);
+
+      if (error) {
+        setSavedJobIds(new Set());
+        setSavedStatusText(`Không tải được danh sách việc đã lưu: ${error.message}`);
+        return;
+      }
+
+      const ids = new Set<number>(
+        (data ?? []).map((row) => (row as { job_id: number }).job_id)
+      );
+      setSavedJobIds(ids);
+      setSavedStatusText("");
+    };
+
+    void loadSavedJobs();
+  }, [user]);
+
+  const toggleSavedJob = async (jobId: number) => {
+    if (!user) {
+      navigate(`/auth?mode=signin&next=${encodeURIComponent("/")}`);
+      return;
+    }
+
+    const client = supabase;
+    if (!isSupabaseConfigured || !client) {
+      setSavedStatusText("Chưa cấu hình Supabase để đồng bộ việc đã lưu.");
+      return;
+    }
+
+    const wasSaved = savedJobIds.has(jobId);
+    setSavedJobIds((prev) => {
+      const next = new Set(prev);
+      if (wasSaved) next.delete(jobId);
+      else next.add(jobId);
+      return next;
+    });
+
+    setSavedStatusText(wasSaved ? "Đã bỏ lưu công việc." : "Đã lưu công việc.");
+
+    if (wasSaved) {
+      const { error } = await client
+        .from("job_saves")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("job_id", jobId);
+
+      if (!error) return;
+
+      setSavedJobIds((prev) => new Set(prev).add(jobId));
+      setSavedStatusText(`Bỏ lưu thất bại: ${error.message}`);
+      return;
+    }
+
+    const { error } = await client.from("job_saves").upsert(
+      { user_id: user.id, job_id: jobId },
+      { onConflict: "user_id,job_id" }
+    );
+
+    if (!error) return;
+
+    setSavedJobIds((prev) => {
+      const next = new Set(prev);
+      next.delete(jobId);
+      return next;
+    });
+    setSavedStatusText(`Lưu thất bại: ${error.message}`);
+  };
 
   const incrementViewCount = async (jobId: number) => {
     let optimisticCount = 0;
@@ -256,34 +369,46 @@ export default function Home() {
   };
 
   const rankedKeywordSuggestions = useMemo(() => {
-    const counts = new Map<string, number>();
+    const counts = new Map<string, { count: number; label: string }>();
 
     jobs.forEach((job) => {
       const candidates = [job.title, job.company, ...(job.tags || [])];
       candidates.forEach((item) => {
         const label = item.trim();
         if (!label) return;
-        counts.set(label, (counts.get(label) ?? 0) + 1);
+        const key = normalizeText(label);
+        const existing = counts.get(key);
+        if (existing) {
+          existing.count += 1;
+          return;
+        }
+        counts.set(key, { count: 1, label: label.toLocaleLowerCase("vi-VN") });
       });
     });
 
     return Array.from(counts.entries())
-      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "vi"))
-      .map(([label]) => label);
+      .sort((a, b) => b[1].count - a[1].count || a[1].label.localeCompare(b[1].label, "vi"))
+      .map(([, value]) => value.label);
   }, [jobs]);
 
   const rankedLocationSuggestions = useMemo(() => {
-    const counts = new Map<string, number>();
+    const counts = new Map<string, { count: number; label: string }>();
 
     jobs.forEach((job) => {
       const location = (job.location || "").trim();
       if (!location) return;
-      counts.set(location, (counts.get(location) ?? 0) + 1);
+      const key = normalizeText(location);
+      const existing = counts.get(key);
+      if (existing) {
+        existing.count += 1;
+        return;
+      }
+      counts.set(key, { count: 1, label: location.toLocaleLowerCase("vi-VN") });
     });
 
     return Array.from(counts.entries())
-      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "vi"))
-      .map(([label]) => label);
+      .sort((a, b) => b[1].count - a[1].count || a[1].label.localeCompare(b[1].label, "vi"))
+      .map(([, value]) => value.label);
   }, [jobs]);
 
   const keywordSuggestions = useMemo(() => {
@@ -328,7 +453,7 @@ export default function Home() {
       const { data, error } = await supabase
         .from("candidate_cvs")
         .select(
-          "id, full_name, email, phone, position, work_experience, salary_range, salary_detail, language, language_level, cv_url, file_name, created_at"
+          "id, user_id, full_name, email, phone, position, work_experience, salary_range, salary_detail, language, language_level, cv_url, file_name, created_at"
         )
         .order("id", { ascending: false })
         .limit(6);
@@ -375,28 +500,42 @@ export default function Home() {
 
   useEffect(() => {
     if (!readNotificationStorageKey) {
-      setReadNotificationIds([]);
+      setReadNotificationKeys([]);
       return;
     }
 
     const raw = window.localStorage.getItem(readNotificationStorageKey);
     if (!raw) {
-      setReadNotificationIds([]);
+      setReadNotificationKeys([]);
       return;
     }
 
     try {
-      const parsed = JSON.parse(raw) as number[];
-      setReadNotificationIds(Array.isArray(parsed) ? parsed.filter(Number.isFinite) : []);
+      const parsed = JSON.parse(raw) as unknown;
+      if (!Array.isArray(parsed)) {
+        setReadNotificationKeys([]);
+        return;
+      }
+
+      if (parsed.every((value) => typeof value === "number")) {
+        setReadNotificationKeys(
+          (parsed as number[]).filter(Number.isFinite).map((id) => `app:${id}`)
+        );
+        return;
+      }
+
+      setReadNotificationKeys(
+        (parsed as unknown[]).filter((value) => typeof value === "string") as string[]
+      );
     } catch {
-      setReadNotificationIds([]);
+      setReadNotificationKeys([]);
     }
   }, [readNotificationStorageKey]);
 
   useEffect(() => {
     if (!readNotificationStorageKey) return;
-    window.localStorage.setItem(readNotificationStorageKey, JSON.stringify(readNotificationIds));
-  }, [readNotificationIds, readNotificationStorageKey]);
+    window.localStorage.setItem(readNotificationStorageKey, JSON.stringify(readNotificationKeys));
+  }, [readNotificationKeys, readNotificationStorageKey]);
 
   useEffect(() => {
     const client = supabase;
@@ -406,58 +545,157 @@ export default function Home() {
     }
 
     const loadNotifications = async () => {
+      const nextNotifications: NotificationItem[] = [];
+
       const jobsResult = await client
         .from("jobs")
         .select("id, title")
         .eq("user_id", user.id);
 
-      if (jobsResult.error) return;
+      if (!jobsResult.error) {
+        const ownedJobs = (jobsResult.data ?? []) as Array<{ id: number; title: string }>;
+        const jobIds = ownedJobs
+          .map((job) => Number(job.id))
+          .filter((id) => Number.isFinite(id));
 
-      const ownedJobs = (jobsResult.data ?? []) as Array<{ id: number; title: string }>;
-      const jobIds = ownedJobs.map((job) => Number(job.id)).filter((id) => Number.isFinite(id));
+        if (jobIds.length > 0) {
+          const titleByJobId = new Map<number, string>();
+          ownedJobs.forEach((job) =>
+            titleByJobId.set(job.id, job.title || "vị trí tuyển dụng")
+          );
 
-      if (jobIds.length === 0) {
-        setNotificationItems([]);
-        return;
+          const applicationsResult = await client
+            .from("job_applications")
+            .select("id, job_id, full_name, created_at")
+            .in("job_id", jobIds)
+            .order("id", { ascending: false })
+            .limit(30);
+
+          if (!applicationsResult.error) {
+            const applications = (applicationsResult.data ?? []) as Array<{
+              id: number;
+              job_id: number;
+              full_name: string;
+              created_at: string;
+            }>;
+
+            for (const item of applications) {
+              const application: ApplicationNotification = {
+                id: item.id,
+                job_id: item.job_id,
+                full_name: item.full_name || "Ứng viên mới",
+                created_at: item.created_at,
+                job_title: titleByJobId.get(item.job_id) || "vị trí tuyển dụng",
+              };
+
+              nextNotifications.push({
+                key: `app:${item.id}`,
+                kind: "application",
+                created_at: item.created_at,
+                application,
+              });
+            }
+          }
+        }
       }
 
-      const titleByJobId = new Map<number, string>();
-      ownedJobs.forEach((job) => titleByJobId.set(job.id, job.title || "vị trí tuyển dụng"));
+      const conversationResult = await client
+        .from("chat_conversations")
+        .select("id, employer_user_id, candidate_user_id")
+        .or(`employer_user_id.eq.${user.id},candidate_user_id.eq.${user.id}`)
+        .limit(100);
 
-      const applicationsResult = await client
-        .from("job_applications")
-        .select("id, job_id, full_name, created_at")
-        .in("job_id", jobIds)
-        .order("id", { ascending: false })
-        .limit(30);
+      if (!conversationResult.error) {
+        const conversations = (conversationResult.data ?? []) as Array<{
+          id: string;
+          employer_user_id: string;
+          candidate_user_id: string;
+        }>;
 
-      if (applicationsResult.error) return;
+        const conversationIds = conversations
+          .map((row) => row.id)
+          .filter((value) => typeof value === "string" && value.length > 0);
 
-      const applications = (applicationsResult.data ?? []) as Array<{
-        id: number;
-        job_id: number;
-        full_name: string;
-        created_at: string;
-      }>;
+        if (conversationIds.length > 0) {
+          const messagesResult = await client
+            .from("chat_messages")
+            .select("id, conversation_id, sender_user_id, message, created_at")
+            .in("conversation_id", conversationIds)
+            .neq("sender_user_id", user.id)
+            .order("id", { ascending: false })
+            .limit(30);
 
-      setNotificationItems(
-        applications.map((item) => ({
-          id: item.id,
-          job_id: item.job_id,
-          full_name: item.full_name || "Ứng viên mới",
-          created_at: item.created_at,
-          job_title: titleByJobId.get(item.job_id) || "vị trí tuyển dụng",
-        }))
+          if (!messagesResult.error) {
+            const rows = (messagesResult.data ?? []) as Array<{
+              id: number;
+              conversation_id: string;
+              sender_user_id: string;
+              message: string;
+              created_at: string;
+            }>;
+
+            const senderIds = Array.from(
+              new Set(rows.map((row) => row.sender_user_id).filter(Boolean))
+            );
+
+            const senderLabelById = new Map<string, string>();
+            if (senderIds.length > 0) {
+              const profilesResult = await client
+                .from("user_profiles")
+                .select("id, full_name, email")
+                .in("id", senderIds);
+
+              if (!profilesResult.error) {
+                for (const profile of (profilesResult.data ?? []) as Array<{
+                  id: string;
+                  full_name: string | null;
+                  email: string | null;
+                }>) {
+                  senderLabelById.set(
+                    profile.id,
+                    profile.full_name || profile.email || `User ${profile.id.slice(0, 8)}`
+                  );
+                }
+              }
+            }
+
+            for (const row of rows) {
+              const chat: ChatNotification = {
+                message_id: row.id,
+                conversation_id: row.conversation_id,
+                sender_user_id: row.sender_user_id,
+                sender_name:
+                  senderLabelById.get(row.sender_user_id) ||
+                  `User ${row.sender_user_id.slice(0, 8)}`,
+                message: row.message,
+                created_at: row.created_at,
+              };
+
+              nextNotifications.push({
+                key: `chat:${row.id}`,
+                kind: "chat",
+                created_at: row.created_at,
+                chat,
+              });
+            }
+          }
+        }
+      }
+
+      nextNotifications.sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
+
+      setNotificationItems(nextNotifications.slice(0, 40));
     };
 
     void loadNotifications();
   }, [user]);
 
-  const markNotificationAsRead = (notificationId: number) => {
-    setReadNotificationIds((prev) => {
-      if (prev.includes(notificationId)) return prev;
-      const next = [notificationId, ...prev];
+  const markNotificationAsRead = (notificationKey: string) => {
+    setReadNotificationKeys((prev) => {
+      if (prev.includes(notificationKey)) return prev;
+      const next = [notificationKey, ...prev].slice(0, 200);
       if (readNotificationStorageKey) {
         window.localStorage.setItem(readNotificationStorageKey, JSON.stringify(next));
       }
@@ -514,6 +752,22 @@ export default function Home() {
     setQuickApply(null);
   };
 
+  const startChatWithCandidate = (candidate: CandidatePreview) => {
+    if (!user) {
+      navigate(`/auth?mode=signin&next=${encodeURIComponent("/messages")}`);
+      return;
+    }
+
+    if (!candidate.user_id) {
+      setCandidateStatus(
+        "Ứng viên chưa liên kết tài khoản. Ứng viên cần đăng nhập và upload CV để chat trực tiếp."
+      );
+      return;
+    }
+
+    navigate(`/messages?candidate=${encodeURIComponent(candidate.user_id)}`);
+  };
+
   return (
     <div className="home">
       <header className="navbar">
@@ -535,7 +789,16 @@ export default function Home() {
           >
             Việc làm
           </button>
-          <a href="#">Nhà tuyển dụng</a>
+          <button
+            type="button"
+            onClick={() => {
+              document
+                .getElementById("ung-vien-noi-bat")
+                ?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
+          >
+            Nhà tuyển dụng
+          </button>
           <a href="#">Công cụ</a>
           <a href="#">Cẩm nang</a>
         </nav>
@@ -581,21 +844,40 @@ export default function Home() {
                       ) : (
                         <div className="notification-list">
                           {notificationItems.map((item) => {
-                            const isRead = readNotificationIds.includes(item.id);
+                            const isRead = readNotificationKeys.includes(item.key);
                             return (
                               <button
-                                key={item.id}
+                                key={item.key}
                                 type="button"
                                 className={`notification-item${isRead ? " read" : ""}`}
                                 onClick={() => {
-                                  markNotificationAsRead(item.id);
+                                  markNotificationAsRead(item.key);
                                   setShowNotificationMenu(false);
-                                  navigate(`/application-notification/${item.id}`);
+                                  if (item.kind === "application") {
+                                    navigate(`/application-notification/${item.application.id}`);
+                                    return;
+                                  }
+                                  navigate(
+                                    `/messages?conversation=${encodeURIComponent(
+                                      item.chat.conversation_id
+                                    )}`
+                                  );
                                 }}
                               >
                                 <span className="notification-item-text">
-                                  <strong>{item.full_name}</strong> đã ứng tuyển vào{" "}
-                                  <strong>{item.job_title}</strong>
+                                  {item.kind === "application" ? (
+                                    <>
+                                      <strong>{item.application.full_name}</strong> đã ứng tuyển vào{" "}
+                                      <strong>{item.application.job_title}</strong>
+                                    </>
+                                  ) : (
+                                    <>
+                                      Tin nhắn mới từ <strong>{item.chat.sender_name}</strong>:{" "}
+                                      {item.chat.message.length > 60
+                                        ? `${item.chat.message.slice(0, 60)}...`
+                                        : item.chat.message}
+                                    </>
+                                  )}
                                 </span>
                                 <span className="notification-item-time">
                                   {formatDate(item.created_at)}
@@ -625,6 +907,12 @@ export default function Home() {
                   <div className="user-dropdown">
                     <Link to="/account" onClick={() => setShowUserMenu(false)}>
                       Hồ sơ của tôi
+                    </Link>
+                    <Link to="/saved" onClick={() => setShowUserMenu(false)}>
+                      Việc đã lưu
+                    </Link>
+                    <Link to="/messages" onClick={() => setShowUserMenu(false)}>
+                      Tin nhắn
                     </Link>
                     <Link to="/upload-cv" onClick={() => setShowUserMenu(false)}>
                       CV của tôi
@@ -769,6 +1057,7 @@ export default function Home() {
         </div>
 
         {statusText && <p className="status-note">{statusText}</p>}
+        {savedStatusText && <p className="status-note">{savedStatusText}</p>}
         {(searchKeyword || searchLocation) && (
           <p className="status-note">
             Kết quả tìm kiếm: {filteredJobs.length} công việc phù hợp.
@@ -780,9 +1069,26 @@ export default function Home() {
             <article key={job.id} className="job-card">
               <div className="job-card-head">
                 <h3>{job.company}</h3>
-                <span className="view-count" title="Lượt xem">
-                  👁 {job.viewCount}
-                </span>
+                <div className="job-card-head-actions">
+                  <button
+                    type="button"
+                    className={`save-toggle${savedJobIds.has(job.id) ? " saved" : ""}`}
+                    aria-pressed={savedJobIds.has(job.id)}
+                    title={
+                      user
+                        ? savedJobIds.has(job.id)
+                          ? "Bỏ lưu công việc"
+                          : "Lưu công việc"
+                        : "Đăng nhập để lưu công việc"
+                    }
+                    onClick={() => void toggleSavedJob(job.id)}
+                  >
+                    🔖
+                  </button>
+                  <span className="view-count" title="Lượt xem">
+                    👁 {job.viewCount}
+                  </span>
+                </div>
               </div>
               <p className="job-position">Vị trí: {job.title}</p>
               <div className="tags">
@@ -828,7 +1134,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="job-section">
+      <section className="job-section" id="ung-vien-noi-bat">
         <div className="job-heading">
           <h2>Ứng viên nổi bật</h2>
           <Link to="/upload-cv">Xem tất cả</Link>
@@ -862,9 +1168,19 @@ export default function Home() {
                 <small>{formatSalaryLabel(candidate)}</small>
                 <small>{candidate.file_name}</small>
               </div>
-              <a className="job-link" href={candidate.cv_url} target="_blank" rel="noreferrer">
-                Xem CV
-              </a>
+              <div className="candidate-actions">
+                <a className="job-link" href={candidate.cv_url} target="_blank" rel="noreferrer">
+                  Xem CV
+                </a>
+                <button
+                  type="button"
+                  className="candidate-contact-btn"
+                  onClick={() => startChatWithCandidate(candidate)}
+                  title={user ? "Nhắn tin cho ứng viên" : "Đăng nhập để nhắn tin"}
+                >
+                  Liên lạc
+                </button>
+              </div>
             </article>
           ))}
         </div>

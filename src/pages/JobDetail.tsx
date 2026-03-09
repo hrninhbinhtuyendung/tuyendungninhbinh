@@ -1,12 +1,17 @@
 ﻿import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import { isSupabaseConfigured, supabase, type JobRecord } from "../lib/supabase";
 import "./JobDetail.css";
 
 function JobDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [job, setJob] = useState<JobRecord | null>(null);
   const [statusText, setStatusText] = useState("Đang tải chi tiết công việc...");
+  const [isSaved, setIsSaved] = useState(false);
+  const [saveStatus, setSaveStatus] = useState("");
 
   useEffect(() => {
     const loadJob = async () => {
@@ -37,6 +42,85 @@ function JobDetail() {
 
     void loadJob();
   }, [id]);
+
+  useEffect(() => {
+    if (!user || !id) {
+      setIsSaved(false);
+      setSaveStatus("");
+      return;
+    }
+
+    const client = supabase;
+    if (!isSupabaseConfigured || !client) {
+      setIsSaved(false);
+      setSaveStatus("");
+      return;
+    }
+
+    const loadSavedState = async () => {
+      const { data, error } = await client
+        .from("job_saves")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("job_id", Number(id))
+        .maybeSingle();
+
+      if (error) {
+        setSaveStatus(`Không kiểm tra được trạng thái đã lưu: ${error.message}`);
+        setIsSaved(false);
+        return;
+      }
+
+      setIsSaved(Boolean(data));
+      setSaveStatus("");
+    };
+
+    void loadSavedState();
+  }, [id, user]);
+
+  const toggleSave = async () => {
+    if (!id) return;
+
+    if (!user) {
+      navigate(`/auth?mode=signin&next=${encodeURIComponent(`/job/${id}`)}`);
+      return;
+    }
+
+    const client = supabase;
+    if (!isSupabaseConfigured || !client) {
+      setSaveStatus("Chưa cấu hình Supabase để đồng bộ việc đã lưu.");
+      return;
+    }
+
+    const jobId = Number(id);
+    const wasSaved = isSaved;
+    setIsSaved(!wasSaved);
+    setSaveStatus(wasSaved ? "Đã bỏ lưu công việc." : "Đã lưu công việc.");
+
+    if (wasSaved) {
+      const { error } = await client
+        .from("job_saves")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("job_id", jobId);
+
+      if (!error) return;
+
+      setIsSaved(true);
+      setSaveStatus(`Bỏ lưu thất bại: ${error.message}`);
+      return;
+    }
+
+    const { error } = await client.from("job_saves").upsert(
+      { user_id: user.id, job_id: jobId },
+      { onConflict: "user_id,job_id" }
+    );
+
+    if (!error) return;
+
+    setIsSaved(false);
+    setSaveStatus(`Lưu thất bại: ${error.message}`);
+  };
 
   if (!job) {
     return (
@@ -127,12 +211,22 @@ function JobDetail() {
                 <strong>Liên hệ:</strong> {job.contact_info}
               </p>
             )}
+            <button
+              type="button"
+              className={`job-detail-save-btn${isSaved ? " saved" : ""}`}
+              onClick={() => void toggleSave()}
+              aria-pressed={isSaved}
+              title={user ? (isSaved ? "Bỏ lưu" : "Lưu công việc") : "Đăng nhập để lưu"}
+            >
+              {isSaved ? "Đã lưu" : "Lưu công việc"}
+            </button>
             <Link to={`/apply/${job.id}`} className="job-detail-apply-btn">
               Ứng tuyển ngay
             </Link>
             <Link to="/" className="job-detail-secondary">
               Xem việc làm khác
             </Link>
+            {saveStatus && <p className="job-detail-save-status">{saveStatus}</p>}
           </div>
         </aside>
       </section>

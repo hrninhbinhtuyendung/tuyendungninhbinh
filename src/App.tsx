@@ -15,8 +15,10 @@ import ApplyJob from "./pages/ApplyJob";
 import Auth from "./pages/Auth";
 import Home from "./pages/Home";
 import JobDetail from "./pages/JobDetail";
+import Messages from "./pages/Messages";
 import PostJob from "./pages/PostJob";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import SavedJobs from "./pages/SavedJobs";
 import UploadCv from "./pages/UploadCv";
 
 function AppLayout() {
@@ -54,6 +56,22 @@ function AppLayout() {
                 Hồ sơ
               </NavLink>
             )}
+            {user && (
+              <NavLink
+                to="/saved"
+                className={({ isActive }) => `app-link${isActive ? " active" : ""}`}
+              >
+                Đã lưu
+              </NavLink>
+            )}
+            {user && (
+              <NavLink
+                to="/messages"
+                className={({ isActive }) => `app-link${isActive ? " active" : ""}`}
+              >
+                Tin nhắn
+              </NavLink>
+            )}
             {!user ? (
               <Link className="app-link" to="/auth?mode=signin">
                 Đăng nhập
@@ -80,6 +98,8 @@ function AppLayout() {
           <Route path="/upload-cv" element={<UploadCv />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/account" element={<AccountProfile />} />
+          <Route path="/saved" element={<SavedJobs />} />
+          <Route path="/messages" element={<Messages />} />
           <Route path="/auth" element={<Auth />} />
         </Routes>
       </main>

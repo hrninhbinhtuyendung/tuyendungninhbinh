@@ -1,9 +1,11 @@
-﻿import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
+import { useAuth } from "../contexts/AuthContext";
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
 import "./UploadCv.css";
 
 type CandidateCv = {
   id: number;
+  user_id?: string | null;
   full_name: string;
   email: string;
   phone: string | null;
@@ -101,6 +103,7 @@ function buildSafeStorageFileName(originalName: string) {
 }
 
 function UploadCv() {
+  const { user } = useAuth();
   const [candidateList, setCandidateList] = useState<CandidateCv[]>([]);
   const [candidateStatus, setCandidateStatus] = useState("");
   const [candidateForm, setCandidateForm] = useState<CandidateForm>(defaultForm);
@@ -120,7 +123,7 @@ function UploadCv() {
       const { data, error } = await supabase
         .from("candidate_cvs")
         .select(
-          "id, full_name, email, phone, position, work_experience, salary_range, salary_detail, language, language_level, cv_url, file_name, created_at"
+          "id, user_id, full_name, email, phone, position, work_experience, salary_range, salary_detail, language, language_level, cv_url, file_name, created_at"
         )
         .order("id", { ascending: false })
         .limit(20);
@@ -213,6 +216,7 @@ function UploadCv() {
       const updateResult = await supabase
         .from("candidate_cvs")
         .update({
+          user_id: user?.id ?? editingCandidate.user_id ?? null,
           full_name: candidateForm.fullName,
           email: candidateForm.email,
           phone: candidateForm.phone || null,
@@ -233,7 +237,7 @@ function UploadCv() {
         })
         .eq("id", editingCandidate.id)
         .select(
-          "id, full_name, email, phone, position, work_experience, salary_range, salary_detail, language, language_level, cv_url, file_name, created_at"
+          "id, user_id, full_name, email, phone, position, work_experience, salary_range, salary_detail, language, language_level, cv_url, file_name, created_at"
         )
         .single();
 
@@ -254,6 +258,7 @@ function UploadCv() {
     const insertResult = await supabase
       .from("candidate_cvs")
       .insert({
+        user_id: user?.id ?? null,
         full_name: candidateForm.fullName,
         email: candidateForm.email,
         phone: candidateForm.phone || null,
@@ -273,7 +278,7 @@ function UploadCv() {
         file_name: fileName,
       })
       .select(
-        "id, full_name, email, phone, position, work_experience, salary_range, salary_detail, language, language_level, cv_url, file_name, created_at"
+        "id, user_id, full_name, email, phone, position, work_experience, salary_range, salary_detail, language, language_level, cv_url, file_name, created_at"
       )
       .single();
 

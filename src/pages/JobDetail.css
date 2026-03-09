@@ -147,6 +147,36 @@
   color: #2f4b3c;
 }
 
+.job-detail-save-btn {
+  display: inline-flex;
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid #cfe2d7;
+  background: #ffffff;
+  color: #0f7e56;
+  font-weight: 800;
+  cursor: pointer;
+  justify-content: center;
+}
+
+.job-detail-save-btn:hover {
+  background: #effcf4;
+}
+
+.job-detail-save-btn.saved {
+  border-color: transparent;
+  background: linear-gradient(135deg, #18b368, #0d8f4f);
+  color: #ffffff;
+}
+
+.job-detail-save-status {
+  margin: 10px 0 0;
+  color: #2f4b3c;
+  font-weight: 600;
+}
+
 .job-detail-apply-btn {
   display: inline-block;
   width: 100%;
@@ -263,6 +293,11 @@
     padding: 10px 12px;
     font-size: 14px;
   }
+
+  .job-detail-save-btn {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
 }
 
 @media (max-width: 420px) {
@@ -290,7 +325,8 @@
   .job-detail-section li,
   .job-detail-card p,
   .job-detail-secondary,
-  .job-detail-apply-btn {
+  .job-detail-apply-btn,
+  .job-detail-save-btn {
     font-size: 13px;
   }
 }
