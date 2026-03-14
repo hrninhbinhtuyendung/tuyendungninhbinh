@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import hrLogo from "../assets/logo_HR.jpg";
 import logoGmail from "../assets/logo_gmail.png";
+import logoZalo from "../assets/logo_zalo.png";
 import { useAuth } from "../contexts/AuthContext";
 import { isSupabaseConfigured, supabase, type JobRecord } from "../lib/supabase";
 import "./Home.css";
@@ -14,12 +14,8 @@ type JobView = {
   location: string;
   tags: string[];
   viewCount: number;
-};
-
-type QuickApplyState = {
-  jobId: number;
-  jobTitle: string;
-  company: string;
+  contactInfo?: string | null;
+  zaloLink?: string | null;
 };
 
 type CandidatePreview = {
@@ -79,6 +75,8 @@ const fallbackJobs: JobView[] = [
     location: "Ninh Bình",
     tags: ["Full-time", "1-2 năm", "Sales"],
     viewCount: 0,
+    contactInfo: null,
+    zaloLink: null,
   },
   {
     id: 2,
@@ -88,6 +86,8 @@ const fallbackJobs: JobView[] = [
     location: "Ninh Bình",
     tags: ["Onsite", "2+ năm", "Accounting"],
     viewCount: 0,
+    contactInfo: null,
+    zaloLink: null,
   },
   {
     id: 3,
@@ -97,12 +97,31 @@ const fallbackJobs: JobView[] = [
     location: "Ninh Bình",
     tags: ["Full-time", "Content", "Social"],
     viewCount: 0,
+    contactInfo: null,
+    zaloLink: null,
   },
 ];
 
 function formatDate(date?: string | null) {
   if (!date) return "";
   return new Date(date).toLocaleString("vi-VN");
+}
+
+function extractVietnamPhoneNumber(contactInfo?: string | null) {
+  if (!contactInfo) return null;
+  const match = contactInfo.match(/(\+?\d[\d\s().-]{7,}\d)/);
+  if (!match) return null;
+  let digits = match[1].replace(/[^\d+]/g, "");
+  if (digits.startsWith("+")) digits = digits.slice(1);
+  if (digits.startsWith("0")) digits = `84${digits.slice(1)}`;
+  if (digits.length < 9) return null;
+  return digits;
+}
+
+function buildZaloLink(contactInfo?: string | null) {
+  const phone = extractVietnamPhoneNumber(contactInfo);
+  if (!phone) return null;
+  return `https://zalo.me/${phone}`;
 }
 
 function formatLanguageLabel(language?: string | null) {
@@ -166,10 +185,6 @@ export default function Home() {
   const readNotificationStorageKey = user
     ? `home_read_notifications_${user.id}`
     : "";
-  const [quickApply, setQuickApply] = useState<QuickApplyState | null>(null);
-  const [quickApplyContact, setQuickApplyContact] = useState("");
-  const [quickApplySubmitting, setQuickApplySubmitting] = useState(false);
-  const [quickApplyStatus, setQuickApplyStatus] = useState("");
 
   const unreadNotificationCount = useMemo(() => {
     if (notificationItems.length === 0) return 0;
@@ -190,7 +205,7 @@ export default function Home() {
 
       const { data, error } = await supabase
         .from("jobs")
-        .select("id, title, company, salary, location, tags, view_count")
+        .select("id, title, company, salary, location, tags, view_count, contact_info")
         .order("view_count", { ascending: false, nullsFirst: false })
         .order("id", { ascending: false })
         .limit(50);
@@ -218,6 +233,8 @@ export default function Home() {
             location: job.location,
             tags: Array.isArray(job.tags) ? job.tags : [],
             viewCount: job.view_count ?? 0,
+            contactInfo: job.contact_info ?? null,
+            zaloLink: buildZaloLink(job.contact_info ?? null),
           }))
         )
       );
@@ -703,55 +720,6 @@ export default function Home() {
     });
   };
 
-  const submitQuickApply = async () => {
-    if (!quickApply || !supabase || !isSupabaseConfigured) {
-      setQuickApplyStatus("Chưa sẵn sàng để gửi ứng tuyển nhanh.");
-      return;
-    }
-
-    const contact = quickApplyContact.trim();
-    if (!contact) {
-      setQuickApplyStatus("Vui lòng nhập số điện thoại hoặc email.");
-      return;
-    }
-
-    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact);
-    const isPhone = /^[0-9+\s().-]{8,20}$/.test(contact);
-    if (!isEmail && !isPhone) {
-      setQuickApplyStatus("Thông tin liên hệ không hợp lệ. Hãy nhập email hoặc số điện thoại.");
-      return;
-    }
-
-    setQuickApplySubmitting(true);
-    setQuickApplyStatus("Đang gửi ứng tuyển nhanh...");
-
-    const payload = {
-      job_id: quickApply.jobId,
-      user_id: null,
-      full_name: "Ứng viên ứng tuyển nhanh",
-      email: isEmail ? contact : `quick-${Date.now()}@tuyendung.local`,
-      phone: isPhone ? contact : "Chưa cung cấp",
-      experience: null,
-      expected_salary: null,
-      cover_letter: `Ứng tuyển nhanh. Liên hệ qua: ${contact}`,
-      cv_url: null,
-      cv_file_name: null,
-    };
-
-    const { error } = await supabase.from("job_applications").insert(payload);
-
-    if (error) {
-      setQuickApplyStatus(`Gửi ứng tuyển thất bại: ${error.message}`);
-      setQuickApplySubmitting(false);
-      return;
-    }
-
-    setQuickApplySubmitting(false);
-    setQuickApplyStatus("");
-    setQuickApplyContact("");
-    setQuickApply(null);
-  };
-
   const startChatWithCandidate = (candidate: CandidatePreview) => {
     if (!user) {
       navigate(`/auth?mode=signin&next=${encodeURIComponent("/messages")}`);
@@ -772,7 +740,7 @@ export default function Home() {
     <div className="home">
       <header className="navbar">
         <div className="logo-wrap">
-          <img src={hrLogo} alt="HR Ninh Bình" className="logo-image" />
+          <img src="/logo_HR.jpg" alt="HR Ninh Bình" className="logo-image" />
           <div className="logo">
             Tuyển dụng <span>Ninh Bình</span>
           </div>
@@ -1108,21 +1076,16 @@ export default function Home() {
                 >
                   Xem chi tiết
                 </button>
-                <button
-                  type="button"
-                  className="job-link quick-apply-trigger"
-                  onClick={() => {
-                    setQuickApply({
-                      jobId: job.id,
-                      jobTitle: job.title,
-                      company: job.company,
-                    });
-                    setQuickApplyContact("");
-                    setQuickApplyStatus("");
-                  }}
+                <a
+                  className="job-link zalo-icon-link"
+                  href={job.zaloLink ?? ""}
+                  target="_blank"
+                  rel="noreferrer"
+                  title="Liên hệ qua Zalo"
+                  aria-label="Liên hệ qua Zalo"
                 >
-                  Ứng tuyển nhanh
-                </button>
+                  <img className="zalo-icon" src={logoZalo} alt="" aria-hidden="true" />
+                </a>
               </div>
             </article>
           ))}
@@ -1185,44 +1148,6 @@ export default function Home() {
           ))}
         </div>
       </section>
-
-      {quickApply && (
-        <div className="quick-apply-overlay" onClick={() => setQuickApply(null)}>
-          <div
-            className="quick-apply-modal"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <h3>Ứng tuyển nhanh</h3>
-            <p>
-              {quickApply.jobTitle} - {quickApply.company}
-            </p>
-            <input
-              value={quickApplyContact}
-              onChange={(event) => setQuickApplyContact(event.target.value)}
-              placeholder="Nhập số điện thoại hoặc email"
-            />
-            <div className="quick-apply-actions">
-              <button
-                type="button"
-                className="quick-apply-cancel"
-                onClick={() => setQuickApply(null)}
-                disabled={quickApplySubmitting}
-              >
-                Hủy
-              </button>
-              <button
-                type="button"
-                className="quick-apply-submit"
-                onClick={() => void submitQuickApply()}
-                disabled={quickApplySubmitting}
-              >
-                {quickApplySubmitting ? "Đang gửi..." : "Gửi ứng tuyển"}
-              </button>
-            </div>
-            {quickApplyStatus && <p className="quick-apply-status">{quickApplyStatus}</p>}
-          </div>
-        </div>
-      )}
 
       <footer className="home-footer">
         <div className="home-footer-grid">

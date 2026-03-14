@@ -7,7 +7,6 @@
   useLocation,
 } from "react-router-dom";
 import "./App.css";
-import hrLogo from "./assets/logo_HR.jpg";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import AccountProfile from "./pages/AccountProfile";
 import ApplicationNotification from "./pages/ApplicationNotification";
@@ -31,7 +30,7 @@ function AppLayout() {
       {showTopbar && (
         <header className="app-topbar">
           <div className="app-brand">
-            <img src={hrLogo} alt="HR Ninh Bình" className="app-brand-logo" />
+            <img src="/logo_HR.jpg" alt="HR Ninh Bình" className="app-brand-logo" />
             Tuyển dụng <span>Ninh Bình</span>
           </div>
 

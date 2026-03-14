@@ -782,109 +782,63 @@
   gap: 8px;
 }
 
-.quick-apply-trigger {
+.zalo-icon-link {
   margin-left: auto;
-  font-family: Arial, sans-serif;
-  font-size: 12px;
-  text-transform: lowercase;
-  font-weight: 600;
-  border-radius: 999px !important;
-  min-height: 32px;
-  padding: 0 14px !important;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  line-height: 1;
-  color: #ffffff !important;
-  border: 1px solid #000000 !important;
-  background: linear-gradient(135deg, #5f00a8 0%, #7a00c4 35%, #3b22c7 70%, #051a8f 100%) !important;
-  box-shadow: 0 6px 14px rgba(76, 29, 149, 0.34);
-  white-space: nowrap;
-  position: relative;
-  overflow: hidden;
-  isolation: isolate;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none;
+  text-decoration: none !important;
+  line-height: 0;
+}
+
+.zalo-icon {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  border-radius: 999px;
+  box-shadow: 0 6px 14px rgba(0, 88, 214, 0.22);
   will-change: transform;
-  animation: quick-apply-shake 3000ms linear infinite;
+  animation: zalo-shake 650ms linear infinite;
 }
 
-.quick-apply-trigger::after {
-  content: "";
-  position: absolute;
-  inset: -60% -40%;
-  pointer-events: none;
-  background: linear-gradient(
-    120deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.22) 32%,
-    rgba(255, 255, 255, 1) 50%,
-    rgba(255, 255, 255, 0.26) 68%,
-    transparent 100%
-  );
-  transform: translateX(-140%);
-  opacity: 0;
-  mix-blend-mode: screen;
-  filter: blur(0.2px);
-  animation: quick-apply-flash 2.2s ease-in-out infinite;
+.zalo-icon-link:hover .zalo-icon {
+  box-shadow: 0 10px 18px rgba(0, 88, 214, 0.26);
 }
 
-.quick-apply-trigger:hover::after {
-  animation-duration: 1.6s;
-}
-
-@keyframes quick-apply-flash {
-  0%,
-  55% {
-    transform: translateX(-140%);
-    opacity: 0;
-  }
-  62% {
-    opacity: 1;
-  }
-  75% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateX(140%);
-    opacity: 0;
-  }
-}
-
-.quick-apply-trigger:hover {
-  color: #ffffff !important;
-  border-color: #000000 !important;
-  background: linear-gradient(135deg, #4f008f 0%, #6900ad 35%, #301cb3 70%, #04157a 100%) !important;
-}
-
-@keyframes quick-apply-shake {
+@keyframes zalo-shake {
   0% {
     transform: translate3d(0, 0, 0) rotate(0deg);
   }
   10% {
-    transform: translate3d(-1px, 0, 0) rotate(-1deg);
+    transform: translate3d(-1px, 0, 0) rotate(-7deg);
   }
   20% {
-    transform: translate3d(1px, 0, 0) rotate(1deg);
+    transform: translate3d(1px, 0, 0) rotate(7deg);
   }
   30% {
-    transform: translate3d(-1px, 0, 0) rotate(0.6deg);
+    transform: translate3d(-1px, 0, 0) rotate(-6deg);
   }
   40% {
-    transform: translate3d(1px, 0, 0) rotate(-0.6deg);
+    transform: translate3d(1px, 0, 0) rotate(6deg);
   }
   50% {
-    transform: translate3d(-1px, 0, 0) rotate(-1deg);
+    transform: translate3d(-1px, 0, 0) rotate(-4deg);
   }
   60% {
-    transform: translate3d(1px, 0, 0) rotate(1deg);
+    transform: translate3d(1px, 0, 0) rotate(4deg);
   }
   70% {
-    transform: translate3d(-1px, 0, 0) rotate(0.6deg);
+    transform: translate3d(-1px, 0, 0) rotate(-3deg);
   }
   80% {
-    transform: translate3d(1px, 0, 0) rotate(-0.6deg);
+    transform: translate3d(1px, 0, 0) rotate(3deg);
   }
   90% {
-    transform: translate3d(-1px, 0, 0) rotate(-1deg);
+    transform: translate3d(-1px, 0, 0) rotate(-2deg);
   }
   100% {
     transform: translate3d(0, 0, 0) rotate(0deg);
@@ -892,91 +846,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .quick-apply-trigger {
-    animation: none;
-  }
-
-  .quick-apply-trigger::after {
+  .zalo-icon {
     animation: none;
   }
 
   .candidate-contact-btn::after {
     animation: none;
   }
-}
-
-.quick-apply-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(10, 28, 20, 0.42);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 80;
-  padding: 14px;
-}
-
-.quick-apply-modal {
-  width: min(460px, 100%);
-  border-radius: 14px;
-  border: 1px solid #cfe2d7;
-  background: #ffffff;
-  box-shadow: 0 18px 36px rgba(9, 48, 31, 0.22);
-  padding: 16px;
-}
-
-.quick-apply-modal h3 {
-  margin: 0;
-  font-size: 24px;
-}
-
-.quick-apply-modal p {
-  margin: 8px 0 10px;
-  color: #355647;
-}
-
-.quick-apply-modal input {
-  width: 100%;
-  border: 1px solid #ccdfd3;
-  border-radius: 10px;
-  padding: 11px 12px;
-  font: inherit;
-  color: #173729;
-}
-
-.quick-apply-actions {
-  margin-top: 10px;
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-.quick-apply-cancel,
-.quick-apply-submit {
-  border-radius: 10px;
-  height: 40px;
-  padding: 0 14px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.quick-apply-cancel {
-  border: 1px solid #ccdfd3;
-  background: #f5fbf7;
-  color: #355647;
-}
-
-.quick-apply-submit {
-  border: 0;
-  color: #ffffff;
-  background: linear-gradient(135deg, #0f9f69, #087a50);
-}
-
-.quick-apply-status {
-  margin: 8px 0 0;
-  color: #2f5c47;
-  font-weight: 600;
-  font-size: 14px;
 }
 
 .cta {
@@ -1126,7 +1002,25 @@
   opacity: 0;
   mix-blend-mode: screen;
   filter: blur(0.2px);
-  animation: quick-apply-flash 2.6s ease-in-out infinite;
+  animation: sweep-flash 2.6s ease-in-out infinite;
+}
+
+@keyframes sweep-flash {
+  0%,
+  55% {
+    transform: translateX(-140%);
+    opacity: 0;
+  }
+  62% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(140%);
+    opacity: 0;
+  }
 }
 
 .candidate-contact-btn:hover {
@@ -1624,27 +1518,17 @@
     font-size: 10px;
   }
 
-  .quick-apply-trigger {
+  .zalo-icon-link {
     margin-left: 0;
-    font-size: 10px;
-    min-height: 28px;
-    padding: 0 10px !important;
+  }
+
+  .zalo-icon {
+    width: 24px;
+    height: 24px;
   }
 
   .job-card-actions {
     gap: 6px;
-  }
-
-  .quick-apply-modal h3 {
-    font-size: 20px;
-  }
-
-  .quick-apply-modal p,
-  .quick-apply-modal input,
-  .quick-apply-cancel,
-  .quick-apply-submit,
-  .quick-apply-status {
-    font-size: 12px;
   }
 
   .metric-grid,
@@ -1816,7 +1700,7 @@
     font-size: 9px;
   }
 
-  .quick-apply-trigger {
+  .zalo-trigger {
     min-height: 26px;
     padding: 0 9px !important;
     font-size: 9px;
