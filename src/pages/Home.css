@@ -1524,7 +1524,13 @@
   }
 
   .job-card h3 {
-    font-size: 15px;
+    font-size: 13px;
+    display: block;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    -webkit-line-clamp: initial;
+    -webkit-box-orient: initial;
   }
 
   .job-position {
@@ -1705,7 +1711,13 @@
   }
 
   .job-card h3 {
-    font-size: 14px;
+    font-size: 12px;
+    display: block;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    -webkit-line-clamp: initial;
+    -webkit-box-orient: initial;
   }
 
   .job-position {
