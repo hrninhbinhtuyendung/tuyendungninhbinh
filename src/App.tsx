@@ -72,9 +72,14 @@ function AppLayout() {
               </NavLink>
             )}
             {!user ? (
-              <Link className="app-link" to="/auth?mode=signin">
-                Đăng nhập
-              </Link>
+              <>
+                <Link className="app-link app-auth-outline" to="/auth?mode=signin">
+                  Đăng nhập
+                </Link>
+                <Link className="app-link app-auth-solid" to="/auth?mode=signup">
+                  Đăng ký
+                </Link>
+              </>
             ) : (
               <button
                 className="app-link app-link-button"

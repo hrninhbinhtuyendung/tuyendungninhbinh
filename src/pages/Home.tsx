@@ -749,26 +749,44 @@ export default function Home() {
         <nav className="nav-links">
           <button
             type="button"
+            className="nav-item"
             onClick={() => {
               document
                 .getElementById("viec-lam-noi-bat")
                 ?.scrollIntoView({ behavior: "smooth", block: "start" });
             }}
           >
+            <span className="nav-icon" aria-hidden="true">
+              🔎
+            </span>
             Việc làm
           </button>
           <button
             type="button"
+            className="nav-item"
             onClick={() => {
               document
                 .getElementById("ung-vien-noi-bat")
                 ?.scrollIntoView({ behavior: "smooth", block: "start" });
             }}
           >
+            <span className="nav-icon" aria-hidden="true">
+              👥
+            </span>
             Nhà tuyển dụng
           </button>
-          <a href="#">Công cụ</a>
-          <a href="#">Cẩm nang</a>
+          <a className="nav-item" href="#">
+            <span className="nav-icon" aria-hidden="true">
+              🧰
+            </span>
+            Công cụ
+          </a>
+          <a className="nav-item" href="#">
+            <span className="nav-icon" aria-hidden="true">
+              📚
+            </span>
+            Cẩm nang
+          </a>
         </nav>
 
         <div className="header-actions">
@@ -781,7 +799,16 @@ export default function Home() {
             </Link>
           </div>
 
-          {user && (
+          {!user ? (
+            <div className="auth-buttons">
+              <Link className="auth-link auth-link-outline" to="/auth?mode=signin">
+                Đăng nhập
+              </Link>
+              <Link className="auth-link auth-link-solid" to="/auth?mode=signup">
+                Đăng ký
+              </Link>
+            </div>
+          ) : (
             <div className="auth-buttons">
               <div className="user-quick-actions" ref={userMenuRef}>
                 <div className="notification-wrap" ref={notificationMenuRef}>
@@ -1036,7 +1063,10 @@ export default function Home() {
           {filteredJobs.map((job) => (
             <article key={job.id} className="job-card">
               <div className="job-card-head">
-                <h3>{job.company}</h3>
+                <h3>
+                  <span className="job-company">{job.company}</span>
+                  <span className="job-title-inline"> - {job.title}</span>
+                </h3>
                 <div className="job-card-head-actions">
                   <button
                     type="button"
@@ -1058,15 +1088,9 @@ export default function Home() {
                   </span>
                 </div>
               </div>
-              <p className="job-position">Vị trí: {job.title}</p>
               <div className="tags">
                 <span>{job.salary}</span>
                 <span>{job.location}</span>
-              </div>
-              <div className="skills">
-                {job.tags.map((tag) => (
-                  <small key={tag}>{tag}</small>
-                ))}
               </div>
               <div className="job-card-actions">
                 <button
